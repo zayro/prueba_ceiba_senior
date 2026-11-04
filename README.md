@@ -112,7 +112,31 @@ Health/readiness y probes: `/actuator/health/liveness`, `/actuator/health/readin
 
 ## Kubernetes / Azure
 
-`deploy/k8s/services.yaml` contiene Deployments y Services con probes, límites de recursos y ejecución no root. Es un manifiesto base para AKS: reemplaza imágenes `YOUR_ACR`, endpoints de PostgreSQL/Kafka/Redis y crea el secreto fuera del repositorio:
+`deploy/terraform/main.tf` provisiona un grupo de recursos, un Azure Container Registry Basic y un clúster AKS con identidad administrada, escalado del node pool y permiso `AcrPull`. No crea recursos de PostgreSQL, Redis, Kafka/Event Hubs, ingress ni secretos; esos servicios deben existir por separado y sus endpoints deben configurarse en `deploy/k8s/services.yaml`. La aplicación de Triage necesita PostgreSQL y Kafka; el Asistente necesita Redis y Kafka.
+
+Requisitos: Terraform 1.5+, Azure CLI autenticada (`az login`) y una suscripción seleccionada. Desde PowerShell:
+
+```powershell
+cd deploy/terraform
+terraform init
+terraform plan -out tfplan
+terraform apply tfplan
+$acr = terraform output -raw acr_name
+$loginServer = terraform output -raw acr_login_server
+terraform output -raw kubeconfig_command
+cd ..\..
+```
+
+Ejecuta el comando mostrado por `kubeconfig_command` para configurar `kubectl`, y publica las imágenes desde la raíz del repositorio:
+
+```powershell
+az acr build --registry $acr --image triage-service:latest --file deploy/Dockerfile.triage .
+az acr build --registry $acr --image assistant-service:latest --file deploy/Dockerfile.assistant .
+```
+
+Antes de aplicar los manifiestos, reemplaza `YOUR_ACR` en `deploy/k8s/services.yaml` por `$loginServer`, configura los endpoints externos y crea el secreto `vidacruz-secrets` como se indica abajo. El permiso de pull del clúster usa identidad administrada; la propagación de ese permiso puede tardar unos minutos.
+
+`deploy/k8s/services.yaml` contiene Deployments y Services con probes, límites de recursos y ejecución no root. Crea el secreto fuera del repositorio:
 
 ```powershell
 kubectl create secret generic vidacruz-secrets `
@@ -123,7 +147,7 @@ kubectl create secret generic vidacruz-secrets `
 kubectl apply -k deploy/k8s
 ```
 
-Usa Azure Database for PostgreSQL, Azure Managed Redis/servicio Redis compatible y Kafka administrado o desplegado por separado. Publica las APIs mediante ingress con TLS y restricciones de red. **No se ha desplegado en Azure en este entorno**, por lo que todavía no existe una URL pública; requiere suscripción, ACR, secretos, servicios administrados e ingress del equipo evaluador.
+Publica las APIs mediante ingress con TLS y restricciones de red. AKS, sus nodos, ACR y los servicios externos pueden generar cargos según región y uso. Para eliminar los recursos creados por Terraform, revisa el plan y ejecuta `terraform destroy` desde `deploy/terraform`; esto no elimina los servicios externos.
 
 ## Decisiones
 
