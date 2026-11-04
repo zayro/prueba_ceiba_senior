@@ -38,12 +38,11 @@ services:
       retries: 15
 
   redis:
-    image: redis:7-alpine
+    image: redis/redis-stack-server:7.4.0-v8
     ports:
       - "${REDIS_HOST_PORT:-16379}:6379"
     volumes:
       - redis-data:/data
-    command: ["redis-server", "--appendonly", "yes"]
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
       interval: 5s
@@ -87,9 +86,14 @@ services:
       API_KEY: ${API_KEY:?Set API_KEY in .env}
       LLM_API_KEY: ${LLM_API_KEY:?Set LLM_API_KEY in .env}
       LLM_MODEL: ${LLM_MODEL:-gemini-3.8-flash}
+      EMBEDDING_MODEL: ${EMBEDDING_MODEL:-gemini-embedding-001}
+      RAG_SIMILARITY_THRESHOLD: ${RAG_SIMILARITY_THRESHOLD:-0.82}
       KAFKA_BOOTSTRAP_SERVERS: kafka:9092
       REDIS_HOST: redis
       REDIS_PORT: 6379
+      REDIS_USERNAME: ${REDIS_USERNAME:-}
+      REDIS_PASSWORD: ${REDIS_PASSWORD:-}
+      REDIS_SSL: ${REDIS_SSL:-false}
     ports:
       - "8081:8081"
     depends_on:

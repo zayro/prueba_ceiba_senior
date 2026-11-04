@@ -3,7 +3,7 @@
 Implementación backend de la prueba técnica con dos aplicaciones independientes en Java 21 y Spring Boot 3.5:
 
 - **Triage** (`:bootJar`, puerto 8080): API reactiva, reglas clínicas deterministas, R2DBC/PostgreSQL, auditoría, outbox Kafka, SLA y reportes SQL.
-- **Asistente clínico** (`:assistant-service:bootJar`, puerto 8081): Spring AI/Google Gemini con recuperación del corpus, validación de citas y vista de urgencias en Redis alimentada solamente por Kafka.
+- **Asistente clínico** (`:assistant-service:bootJar`, puerto 8081): Spring AI/Google Gemini con RAG vectorial en Redis Stack, validación de citas y vista de urgencias en Redis alimentada solamente por Kafka.
 
 > **Uso clínico:** es una implementación de referencia para la prueba, no un dispositivo médico ni un sustituto del criterio profesional. No utilizar para decisiones clínicas reales sin revisión, validación clínica, privacidad, seguridad y controles regulatorios.
 
@@ -17,7 +17,7 @@ flowchart LR
     Triage --> Outbox[Outbox transaccional]
     Outbox -->|Kafka, key = patientId| Kafka[(triaje.eventos)]
     Kafka -->|consumidor con ACK tras proyección| Assistant
-    Assistant --> Redis[(Redis: vista de pacientes activos)]
+    Assistant --> Redis[(Redis Stack: RAG vectorial + vista de pacientes activos)]
     Assistant -->|RAG + circuit breaker| Gemini[Google Gemini]
     Triage --> Metrics[Actuator / Micrometer / Prometheus]
     Assistant --> Metrics
@@ -98,7 +98,7 @@ Los niveles siguen el orden de gravedad del enunciado: `CRITICO`, `URGENTE`, `UR
 - `POST /asistente/consulta`: recibe `{"pregunta":"¿Cuáles son las medidas iniciales ante una crisis hipertensiva?"}` y responde `{"respuesta":"... [PROTO-001]","fuentes":[{"protocolo":"PROTO-001","seccion":"Manejo inicial"}]}`.
 - `GET /asistente/estado-urgencias`: cuenta pacientes activos por nivel desde la proyección Redis; no llama a la API de Triage.
 
-Si no hay coincidencia en `clinical-protocols.json`, devuelve exclusivamente `No existe un protocolo disponible para la pregunta.` y `fuentes: []`, sin llamar al modelo. Google Gemini se configura con una API key de Google AI Studio en `LLM_API_KEY` y opcionalmente con `LLM_MODEL` (por defecto `gemini-3.8-flash`). Sin proveedor disponible o con el circuit breaker abierto, las consultas coincidentes devuelven 503 explícito.
+Si no hay coincidencia vectorial por encima del umbral en `clinical-protocols.json`, devuelve exclusivamente `No existe un protocolo disponible para la pregunta.` y `fuentes: []`, sin llamar al modelo de chat. Para evaluar la coincidencia sí se genera un embedding de la pregunta usando Google GenAI. La API key de Google AI Studio en `LLM_API_KEY` se usa para embeddings y generación; `LLM_MODEL` configura el modelo de chat (`gemini-3.8-flash` por defecto), `EMBEDDING_MODEL` el modelo vectorial (`gemini-embedding-001`) y `RAG_SIMILARITY_THRESHOLD` el umbral (`0.82`). Este umbral inicial separa las consultas smoke probadas, pero debe ajustarse con un conjunto representativo de preguntas y no constituye una validación clínica. Sin proveedor disponible o con el circuit breaker abierto, las consultas con evidencia recuperada devuelven 503 explícito.
 
 La respuesta generada se acepta solo si cita protocolos recuperados y el texto, al retirar las citas, aparece literalmente en la evidencia recuperada. Si no supera esa comprobación, se responde con extractos literales del corpus y sus IDs. Esta validación extractiva evita aceptar paráfrasis no verificables; no reemplaza la revisión clínica del corpus.
 
@@ -108,11 +108,13 @@ Topic: `triaje.eventos`. Mensajes JSON versionados por evolución del contrato, 
 
 La auditoría y el outbox no tienen endpoints de borrado. El escalamiento es atómico (`REGISTRADO`, SLA vencido y `escalated=false`), de modo que tareas concurrentes no duplican auditoría/evento. La tabla outbox conserva mensajes aún pendientes; tras publicar, el consumidor Redis es idempotente por paciente/estado/fecha.
 
+El asistente indexa al iniciar los protocolos de `clinical-protocols.json` en Redis Stack. Las consultas y los protocolos se convierten en embeddings Google GenAI (`EMBEDDING_MODEL`, por defecto `gemini-embedding-001`, 768 dimensiones) y se busca el protocolo más similar; `RAG_SIMILARITY_THRESHOLD` controla la similitud mínima (por defecto `0.82`). Redis retorna el ID del documento y el asistente obtiene el contenido/cita autorizado del catálogo local original para validarlo; el vector store no es fuente de verdad clínica. Se requiere Redis Stack/RediSearch, no una imagen Redis básica. Las preguntas y protocolos se envían a Google para generar embeddings; si hay coincidencia, la pregunta y evidencia también se envían a Gemini para responder.
+
 Health/readiness y probes: `/actuator/health/liveness`, `/actuator/health/readiness`. Métricas: `/actuator/metrics` y `/actuator/prometheus`; incluye `triage.classifications`, `triage.escalations`, `assistant.llm.latency` y transiciones del circuit breaker. Las APIs añaden `X-Correlation-Id` (lo aceptan o generan) y lo registran junto con método, ruta, estado y latencia, sin registrar el cuerpo clínico.
 
 ## Kubernetes / Azure
 
-`deploy/terraform/main.tf` provisiona un grupo de recursos, un Azure Container Registry Basic y un clúster AKS con identidad administrada, escalado del node pool y permiso `AcrPull`. No crea recursos de PostgreSQL, Redis, Kafka/Event Hubs, ingress ni secretos; esos servicios deben existir por separado y sus endpoints deben configurarse en `deploy/k8s/services.yaml`. La aplicación de Triage necesita PostgreSQL y Kafka; el Asistente necesita Redis y Kafka.
+`deploy/terraform/main.tf` provisiona un grupo de recursos, un Azure Container Registry Basic y un clúster AKS con identidad administrada, escalado del node pool y permiso `AcrPull`. No crea recursos de PostgreSQL, Redis, Kafka/Event Hubs, ingress ni secretos; esos servicios deben existir por separado y sus endpoints deben configurarse en `deploy/k8s/services.yaml`. La aplicación de Triage necesita PostgreSQL y Kafka; el Asistente necesita Redis con RediSearch/vector search y Kafka.
 
 Requisitos: Terraform 1.5+, Azure CLI autenticada (`az login`) y una suscripción seleccionada. Desde PowerShell:
 
@@ -146,6 +148,8 @@ kubectl create secret generic vidacruz-secrets `
   --from-literal=llm-api-key="$env:LLM_API_KEY"
 kubectl apply -k deploy/k8s
 ```
+
+Si el Redis externo requiere autenticación, incluye también `--from-literal=redis-username="$env:REDIS_USERNAME"` y `--from-literal=redis-password="$env:REDIS_PASSWORD"` al crear el secreto. Para endpoints TLS (requerido habitualmente por Redis administrado en Azure), configura `REDIS_SSL=true`; el ejemplo de Kubernetes ya lo habilita.
 
 Publica las APIs mediante ingress con TLS y restricciones de red. AKS, sus nodos, ACR y los servicios externos pueden generar cargos según región y uso. Para eliminar los recursos creados por Terraform, revisa el plan y ejecuta `terraform destroy` desde `deploy/terraform`; esto no elimina los servicios externos.
 
