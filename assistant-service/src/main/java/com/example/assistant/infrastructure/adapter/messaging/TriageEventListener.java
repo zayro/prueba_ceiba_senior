@@ -1,0 +1,47 @@
+package com.example.assistant.infrastructure.adapter.messaging;
+
+import com.example.assistant.application.service.UrgencyService;
+import com.example.assistant.domain.model.TriageEvent;
+import com.example.assistant.infrastructure.adapter.messaging.dto.TriageEventMessage;
+import com.example.assistant.infrastructure.mapper.TriageEventMapper;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.kafka.annotation.KafkaListener;
+import org.springframework.kafka.support.Acknowledgment;
+import org.springframework.stereotype.Component;
+
+@Component
+public class TriageEventListener {
+	private static final Logger log = LoggerFactory.getLogger(TriageEventListener.class);
+	private final ObjectMapper objectMapper;
+	private final UrgencyService urgencyService;
+	private final TriageEventMapper eventMapper;
+
+	public TriageEventListener(
+		ObjectMapper objectMapper,
+		UrgencyService urgencyService,
+		TriageEventMapper eventMapper
+	) {
+		this.objectMapper = objectMapper;
+		this.urgencyService = urgencyService;
+		this.eventMapper = eventMapper;
+	}
+
+	@KafkaListener(topics = "${assistant.kafka.topic}", groupId = "${spring.kafka.consumer.group-id}")
+	public void consume(String payload, Acknowledgment acknowledgment) {
+		TriageEvent event;
+		try {
+			TriageEventMessage message = objectMapper.readValue(payload, TriageEventMessage.class);
+			event = eventMapper.toDomain(message);
+		} catch (JsonProcessingException error) {
+			throw new IllegalArgumentException("Evento de triaje inválido", error);
+		}
+		urgencyService.apply(event)
+			.doOnSuccess(ignored -> acknowledgment.acknowledge())
+			.doOnError(error -> log.error("Failed to update urgency projection eventId={}",
+				event.eventId(), error))
+			.subscribe();
+	}
+}
