@@ -101,7 +101,13 @@ Los niveles siguen el orden de gravedad del enunciado: `CRITICO`, `URGENTE`, `UR
 
 ### Métricas (Prometheus y Grafana)
 
-`docker compose up -d` levanta también Prometheus (`http://localhost:9090`) y Grafana (`http://localhost:3000`, usuario `admin`, contraseña `GRAFANA_ADMIN_PASSWORD`, por defecto `admin`). Prometheus recolecta `/actuator/prometheus` de Triage y del asistente cada 15 s, enviando `API_KEY` en `X-API-Key` (se inyecta al arrancar desde `.env`); el estado está en *Status > Targets*. Grafana ya trae Prometheus como datasource: usa *Explore* con métricas como `jvm_memory_used_bytes`, `http_server_requests_seconds_count` o `resilience4j_circuitbreaker_state`. Los puertos se cambian con `PROMETHEUS_HOST_PORT` y `GRAFANA_HOST_PORT`.
+`docker compose up -d` levanta también Prometheus (`http://localhost:9090`) y Grafana (`http://localhost:3000`, usuario `admin`, contraseña `GRAFANA_ADMIN_PASSWORD`, por defecto `admin`). Prometheus recolecta `/actuator/prometheus` de Triage y del asistente cada 15 s, enviando `API_KEY` en `X-API-Key` (se inyecta al arrancar desde `.env`); el estado está en *Status > Targets*. Grafana ya trae Prometheus como datasource y el dashboard **Ceiba - Servicios y requests** (carpeta *Ceiba*), con variables `Servicio` y `Request (uri)`:
+
+- **Por servicio:** requests/s, latencia media, errores 5xx, memoria heap y estado del circuit breaker.
+- **Por request:** requests/s y latencia media por endpoint (método + uri), requests/s por código de estado y una tabla resumen de los últimos 5 min.
+- **Negocio (Triage):** clasificaciones por nivel y escalamientos por SLA.
+
+Los puertos se cambian con `PROMETHEUS_HOST_PORT` y `GRAFANA_HOST_PORT`. Para ver datos, genera tráfico contra `/triage/*` y `/asistente/*` con `X-API-Key`.
 
 ### Kafka UI (`http://localhost:8090`)
 
