@@ -1,7 +1,6 @@
 package com.example.assistant.application;
 
 import com.example.assistant.domain.Protocol;
-import com.example.assistant.domain.ProtocolMatch;
 import com.example.assistant.domain.ProtocolRetriever;
 import java.util.List;
 import java.util.Set;
@@ -9,6 +8,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Mono;
+import reactor.core.scheduler.Schedulers;
 
 @Service
 public class ClinicalAssistant {
@@ -24,16 +24,18 @@ public class ClinicalAssistant {
 	}
 
 	public Mono<AssistantResponse> consult(String question) {
-		List<ProtocolMatch> matches = retriever.retrieve(question);
-		if (matches.isEmpty()) {
-			return Mono.just(new AssistantResponse(NO_PROTOCOL, List.of()));
-		}
-		List<Protocol> evidence = matches.stream().map(ProtocolMatch::protocol).toList();
-		List<ProtocolSource> sources = evidence.stream()
-			.map(protocol -> new ProtocolSource(protocol.id(), protocol.section()))
-			.toList();
-		return answerGenerator.generate(question, evidence)
-			.map(answer -> new AssistantResponse(validateCitation(answer, evidence), sources));
+		return Mono.fromCallable(() -> retriever.retrieve(question))
+			.subscribeOn(Schedulers.boundedElastic())
+			.flatMap(evidence -> {
+				if (evidence.isEmpty()) {
+					return Mono.just(new AssistantResponse(NO_PROTOCOL, List.of()));
+				}
+				List<ProtocolSource> sources = evidence.stream()
+					.map(protocol -> new ProtocolSource(protocol.id(), protocol.section()))
+					.toList();
+				return answerGenerator.generate(question, evidence)
+					.map(answer -> new AssistantResponse(validateCitation(answer, evidence), sources));
+			});
 	}
 
 	private String validateCitation(String answer, List<Protocol> evidence) {
