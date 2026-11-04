@@ -1,11 +1,11 @@
 package com.example.assistant.application.service;
 
-import com.example.assistant.application.model.AssistantResponse;
-import com.example.assistant.application.model.ProtocolSource;
+import com.example.assistant.domain.model.AssistantResponse;
+import com.example.assistant.domain.model.ProtocolSource;
 import com.example.assistant.application.validation.AnswerGroundingValidator;
 import com.example.assistant.domain.model.Protocol;
-import com.example.assistant.domain.port.ClinicalAnswerGenerator;
-import com.example.assistant.domain.port.ProtocolRetriever;
+import com.example.assistant.domain.port.outbound.ClinicalAnswerGenerator;
+import com.example.assistant.domain.port.outbound.ProtocolRetriever;
 import java.util.List;
 import reactor.core.publisher.Mono;
 import reactor.core.scheduler.Schedulers;

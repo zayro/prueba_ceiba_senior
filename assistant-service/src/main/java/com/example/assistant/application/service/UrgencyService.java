@@ -1,7 +1,7 @@
 package com.example.assistant.application.service;
 
 import com.example.assistant.domain.model.TriageEvent;
-import com.example.assistant.domain.port.ActiveUrgencyProjection;
+import com.example.assistant.domain.port.outbound.ActiveUrgencyProjection;
 import java.util.Map;
 import reactor.core.publisher.Mono;
 

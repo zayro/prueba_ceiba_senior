@@ -3,7 +3,7 @@ package com.example.assistant.application.service;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import com.example.assistant.application.model.AssistantResponse;
+import com.example.assistant.domain.model.AssistantResponse;
 import com.example.assistant.application.validation.AnswerGroundingValidator;
 import com.example.assistant.domain.model.Protocol;
 import java.util.List;

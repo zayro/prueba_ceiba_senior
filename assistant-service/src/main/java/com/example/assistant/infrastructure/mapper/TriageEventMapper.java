@@ -1,7 +1,7 @@
 package com.example.assistant.infrastructure.mapper;
 
 import com.example.assistant.domain.model.TriageEvent;
-import com.example.assistant.infrastructure.adapter.messaging.dto.TriageEventMessage;
+import com.example.assistant.infrastructure.adapter.inbound.kafka.dto.TriageEventMessage;
 import org.springframework.stereotype.Component;
 
 @Component
