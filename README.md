@@ -2,7 +2,7 @@
 
 Implementación backend de la prueba técnica con dos aplicaciones independientes en Java 21 y Spring Boot 3.5:
 
-- **Triage** (`:bootJar`, puerto 8080): API reactiva, reglas clínicas deterministas, R2DBC/PostgreSQL, auditoría, outbox Kafka, SLA y reportes SQL.
+- **Triage** (`:bootJar`, puerto interno 8080; puerto local 18080): API reactiva, reglas clínicas deterministas, R2DBC/PostgreSQL, auditoría, outbox Kafka, SLA y reportes SQL.
 - **Asistente clínico** (`:assistant-service:bootJar`, puerto 8081): Spring AI/Google Gemini con RAG vectorial en Redis Stack, validación de citas y vista de urgencias en Redis alimentada solamente por Kafka.
 
 > **Uso clínico:** es una implementación de referencia para la prueba, no un dispositivo médico ni un sustituto del criterio profesional. No utilizar para decisiones clínicas reales sin revisión, validación clínica, privacidad, seguridad y controles regulatorios.
@@ -37,7 +37,7 @@ El asistente consume el topic `triaje.eventos`, confirma el offset solo después
 
 Requisitos: Docker Compose y una API key de Google AI Studio para probar consultas con coincidencias.
 
-1. Ejecuta `make setup` para copiar `.env.example` a `.env` si todavía no existe. Edita el archivo y reemplaza `API_KEY`, `DB_PASSWORD` y `LLM_API_KEY` con una clave de Google AI Studio. Compose exige las tres variables; no se incluyen credenciales predeterminadas. El modelo por defecto es `gemini-3.8-flash`; puedes cambiarlo con `LLM_MODEL`.
+1. Ejecuta `make setup` para copiar `.env.example` a `.env` si todavía no existe. Edita el archivo y reemplaza `API_KEY`, `DB_PASSWORD` y `LLM_API_KEY` con una clave de Google AI Studio. Compose exige las tres variables; no se incluyen credenciales predeterminadas. El modelo por defecto es `gemini-3.8-flash`; puedes cambiarlo con `LLM_MODEL`. Triage se publica en el puerto local `18080` para evitar conflictos con servicios que usan `8080`; cambia `TRIAGE_HOST_PORT` en `.env` si necesitas otro puerto.
 2. Desde la raíz ejecuta `make up` para construir e iniciar todos los contenedores:
 
    ```powershell
@@ -77,7 +77,7 @@ La carpeta `04 - Escalamiento SLA` requiere `make up-fast-sla`: crea un paciente
 
 Todos los endpoints de negocio requieren `X-API-Key`. Los endpoints de health de Actuator son públicos para las probes. En producción, usar TLS en el ingress y un gestor de secretos; la API key compartida es autenticación básica de referencia, no identidad/autorización por usuario.
 
-### Triage (`http://localhost:8080`)
+### Triage (`http://localhost:18080`; configurable con `TRIAGE_HOST_PORT`)
 
 - `POST /triage/pacientes`: valida rangos y presión diastólica menor que sistólica; registra, clasifica, audita y crea evento.
 - `PATCH /triage/pacientes/{id}/estado`: recibe `{"state":"EN_CONSULTA"}` o `{"state":"ALTA"}`. Transiciones no permitidas devuelven 409.
@@ -93,7 +93,7 @@ $patient = @{
   systolicPressure = 180; diastolicPressure = 110; oxygenSaturation = 97
   temperature = 36.8; pain = 8; gcs = 15; chiefComplaint = "Dolor torácico"
 } | ConvertTo-Json
-Invoke-RestMethod -Method Post -Uri http://localhost:8080/triage/pacientes `
+Invoke-RestMethod -Method Post -Uri http://localhost:18080/triage/pacientes `
   -Headers $headers -ContentType "application/json" -Body $patient
 ```
 

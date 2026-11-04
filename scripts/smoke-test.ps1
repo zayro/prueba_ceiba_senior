@@ -1,10 +1,26 @@
 param(
-	[string]$TriageUrl = "http://localhost:8080",
+	[string]$TriageUrl,
 	[string]$AssistantUrl = "http://localhost:8081",
 	[string]$ApiKey
 )
 
 $ErrorActionPreference = "Stop"
+
+if ([string]::IsNullOrWhiteSpace($TriageUrl)) {
+	$triageHostPort = $env:TRIAGE_HOST_PORT
+	if ([string]::IsNullOrWhiteSpace($triageHostPort) -and (Test-Path ".env")) {
+		$triagePortLine = Get-Content ".env" |
+			Where-Object { $_ -match '^\s*TRIAGE_HOST_PORT\s*=' } |
+			Select-Object -First 1
+		if ($null -ne $triagePortLine) {
+			$triageHostPort = ($triagePortLine -split "=", 2)[1].Trim().Trim('"').Trim("'")
+		}
+	}
+	if ([string]::IsNullOrWhiteSpace($triageHostPort)) {
+		$triageHostPort = "18080"
+	}
+	$TriageUrl = "http://localhost:$triageHostPort"
+}
 
 if ([string]::IsNullOrWhiteSpace($ApiKey)) {
 	if (!(Test-Path ".env")) {

@@ -6,7 +6,7 @@
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "variable": [
-    { "key": "triageUrl", "value": "http://localhost:8080" },
+    { "key": "triageUrl", "value": "http://localhost:18080" },
     { "key": "assistantUrl", "value": "http://localhost:8081" },
     { "key": "apiKey", "value": "replace-with-a-random-api-key" },
     { "key": "patientId", "value": "" },

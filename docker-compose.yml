@@ -78,7 +78,7 @@ services:
       TRIAGE_SLA_NO_URGENTE_MINUTES: ${TRIAGE_SLA_NO_URGENTE_MINUTES:-60}
       TRIAGE_SLA_NO_URGENTE_2_MINUTES: ${TRIAGE_SLA_NO_URGENTE_2_MINUTES:-120}
     ports:
-      - "8080:8080"
+      - "${TRIAGE_HOST_PORT:-18080}:8080"
     depends_on:
       postgres:
         condition: service_healthy

@@ -45,7 +45,7 @@ smoke:
 manual:
 	@powershell -NoProfile -Command "Write-Host 'Importa postman\VidaCruz.postman_collection.json y postman\VidaCruz Local.postman_environment.json en Postman.'"
 	@powershell -NoProfile -Command "Write-Host 'Selecciona el entorno VidaCruz Local, configura apiKey con el valor API_KEY de .env y ejecuta la colección en orden.'"
-	@powershell -NoProfile -Command "Write-Host 'Triage: http://localhost:8080 | Asistente: http://localhost:8081 | Smoke test: make smoke'"
+	@powershell -NoProfile -Command "Write-Host 'Triage: http://localhost:18080 (TRIAGE_HOST_PORT) | Asistente: http://localhost:8081 | Smoke test: make smoke'"
 
 postman: manual
 
