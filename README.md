@@ -99,6 +99,10 @@ Invoke-RestMethod -Method Post -Uri http://localhost:8080/triage/pacientes `
 
 Los niveles siguen el orden de gravedad del enunciado: `CRITICO`, `URGENTE`, `URGENTE_2`, `NO_URGENTE`, `NO_URGENTE_2`. Los SLA por defecto son 5, 10, 30, 60 y 120 minutos; son configurables con `TRIAGE_SLA_*_MINUTES`. El intervalo del scheduler se configura con `TRIAGE_SCHEDULER_DELAY_MS`.
 
+### Métricas (Prometheus y Grafana)
+
+`docker compose up -d` levanta también Prometheus (`http://localhost:9090`) y Grafana (`http://localhost:3000`, usuario `admin`, contraseña `GRAFANA_ADMIN_PASSWORD`, por defecto `admin`). Prometheus recolecta `/actuator/prometheus` de Triage y del asistente cada 15 s, enviando `API_KEY` en `X-API-Key` (se inyecta al arrancar desde `.env`); el estado está en *Status > Targets*. Grafana ya trae Prometheus como datasource: usa *Explore* con métricas como `jvm_memory_used_bytes`, `http_server_requests_seconds_count` o `resilience4j_circuitbreaker_state`. Los puertos se cambian con `PROMETHEUS_HOST_PORT` y `GRAFANA_HOST_PORT`.
+
 ### Kafka UI (`http://localhost:8090`)
 
 `docker compose up -d` también levanta Kafka UI para inspeccionar topics, mensajes y consumer groups del broker local. El puerto se cambia con `KAFKA_UI_HOST_PORT`.
