@@ -11,6 +11,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.support.WebExchangeBindException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.server.ResponseStatusException;
 import org.springframework.web.server.ServerWebInputException;
 
 @RestControllerAdvice
@@ -36,6 +37,11 @@ public class ApiExceptionHandler {
 	@ExceptionHandler(InvalidTransitionException.class)
 	public ResponseEntity<ApiError> conflict(InvalidTransitionException error) {
 		return response(HttpStatus.CONFLICT, error.getMessage());
+	}
+
+	@ExceptionHandler(ResponseStatusException.class)
+	public ResponseEntity<ApiError> status(ResponseStatusException error) {
+		return response(HttpStatus.valueOf(error.getStatusCode().value()), error.getReason());
 	}
 
 	@ExceptionHandler(Exception.class)

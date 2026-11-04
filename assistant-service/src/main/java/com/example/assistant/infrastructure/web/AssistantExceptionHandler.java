@@ -9,6 +9,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.support.WebExchangeBindException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.server.ResponseStatusException;
 import org.springframework.web.server.ServerWebInputException;
 
 @RestControllerAdvice
@@ -28,6 +29,11 @@ public class AssistantExceptionHandler {
 				.findFirst().orElse("Solicitud inválida")
 			: error.getMessage();
 		return response(HttpStatus.BAD_REQUEST, message);
+	}
+
+	@ExceptionHandler(ResponseStatusException.class)
+	public ResponseEntity<ApiError> status(ResponseStatusException error) {
+		return response(HttpStatus.valueOf(error.getStatusCode().value()), error.getReason());
 	}
 
 	@ExceptionHandler(Exception.class)
