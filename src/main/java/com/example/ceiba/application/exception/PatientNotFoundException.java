@@ -1,4 +1,4 @@
-package com.example.ceiba.application;
+package com.example.ceiba.application.exception;
 
 public class PatientNotFoundException extends RuntimeException {
 	public PatientNotFoundException(String message) {

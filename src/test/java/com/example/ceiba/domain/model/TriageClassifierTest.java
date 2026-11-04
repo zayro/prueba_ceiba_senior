@@ -1,6 +1,9 @@
-package com.example.ceiba.domain;
+package com.example.ceiba.domain.model;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.math.BigDecimal;
 import org.junit.jupiter.api.Test;
@@ -17,6 +20,21 @@ class TriageClassifierTest {
 		assertEquals(TriageLevel.NO_URGENTE_2, classify(70, 115, 75, 99, "36.4", 0, 15, "Renovación de recetario"));
 		assertEquals(TriageLevel.NO_URGENTE_2, classify(70, 115, 75, 99, "36.4", 0, 15, "VACUNACION"));
 		assertEquals(TriageLevel.CRITICO, classify(35, 80, 50, 85, "35.9", 0, 6, "Inconsciente"));
+	}
+
+	@Test
+	void rejectsDiastolicPressureThatIsNotBelowSystolicPressure() {
+		assertThrows(IllegalArgumentException.class, () -> new PatientData(
+			"Paciente de prueba", 40, 80, 120, 120, 98,
+			new BigDecimal("36.5"), 2, 15, "Control"
+		));
+	}
+
+	@Test
+	void onlyAllowsTheSupportedPatientStateTransitions() {
+		assertTrue(PatientState.REGISTRADO.canTransitionTo(PatientState.EN_CONSULTA));
+		assertTrue(PatientState.REGISTRADO.canTransitionTo(PatientState.ALTA));
+		assertFalse(PatientState.ALTA.canTransitionTo(PatientState.EN_CONSULTA));
 	}
 
 	private TriageLevel classify(

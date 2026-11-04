@@ -1,4 +1,4 @@
-package com.example.ceiba.application;
+package com.example.ceiba.domain.model;
 
 import java.time.Instant;
 import java.util.UUID;

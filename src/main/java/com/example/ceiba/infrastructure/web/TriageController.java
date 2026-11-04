@@ -1,6 +1,8 @@
 package com.example.ceiba.infrastructure.web;
 
-import com.example.ceiba.application.TriageService;
+import com.example.ceiba.domain.model.PatientState;
+import com.example.ceiba.domain.port.TriageUseCases;
+import com.example.ceiba.infrastructure.mapper.TriageWebMapper;
 import jakarta.validation.Valid;
 import java.time.Instant;
 import java.util.UUID;
@@ -21,28 +23,31 @@ import reactor.core.publisher.Mono;
 @RestController
 @RequestMapping("/triage")
 public class TriageController {
-	private final TriageService triageService;
+	private final TriageUseCases triageUseCases;
+	private final TriageWebMapper mapper;
 
-	public TriageController(TriageService triageService) {
-		this.triageService = triageService;
+	public TriageController(TriageUseCases triageUseCases, TriageWebMapper mapper) {
+		this.triageUseCases = triageUseCases;
+		this.mapper = mapper;
 	}
 
 	@PostMapping("/pacientes")
 	@ResponseStatus(HttpStatus.CREATED)
 	public Mono<PatientResponse> register(@Valid @RequestBody RegisterPatientRequest request) {
-		return triageService.register(request);
+		return Mono.from(triageUseCases.register(mapper.toDomain(request))).map(mapper::toResponse);
 	}
 
 	@PatchMapping("/pacientes/{id}/estado")
 	public Mono<PatientResponse> changeState(
 		@PathVariable UUID id, @Valid @RequestBody ChangeStateRequest request
 	) {
-		return triageService.changeState(id, request.state());
+		return Mono.from(triageUseCases.changeState(id, PatientState.valueOf(request.state())))
+			.map(mapper::toResponse);
 	}
 
 	@GetMapping("/pacientes/{id}")
 	public Mono<PatientResponse> findPatient(@PathVariable UUID id) {
-		return triageService.findPatient(id);
+		return Mono.from(triageUseCases.findPatient(id)).map(mapper::toResponse);
 	}
 
 	@GetMapping("/reportes/operacion")
@@ -53,6 +58,6 @@ public class TriageController {
 		if (!desde.isBefore(hasta)) {
 			return Flux.error(new IllegalArgumentException("desde debe ser anterior a hasta"));
 		}
-		return triageService.operationReport(desde, hasta);
+		return Flux.from(triageUseCases.operationReport(desde, hasta)).map(mapper::toResponse);
 	}
 }

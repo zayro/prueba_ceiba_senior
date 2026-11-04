@@ -1,7 +1,7 @@
 package com.example.ceiba.infrastructure.web;
 
-import com.example.ceiba.application.InvalidTransitionException;
-import com.example.ceiba.application.PatientNotFoundException;
+import com.example.ceiba.application.exception.InvalidTransitionException;
+import com.example.ceiba.application.exception.PatientNotFoundException;
 import jakarta.validation.ConstraintViolationException;
 import java.time.Instant;
 import org.slf4j.Logger;

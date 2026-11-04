@@ -1,4 +1,4 @@
-package com.example.ceiba.domain;
+package com.example.ceiba.domain.model;
 
 import java.util.Map;
 

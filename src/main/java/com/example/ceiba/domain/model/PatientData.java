@@ -1,4 +1,4 @@
-package com.example.ceiba.domain;
+package com.example.ceiba.domain.model;
 
 import java.math.BigDecimal;
 
@@ -14,4 +14,10 @@ public record PatientData(
 	int gcs,
 	String chiefComplaint
 ) {
+	public PatientData {
+		if (diastolicPressure >= systolicPressure) {
+			throw new IllegalArgumentException(
+				"diastolicPressure debe ser menor que systolicPressure");
+		}
+	}
 }
