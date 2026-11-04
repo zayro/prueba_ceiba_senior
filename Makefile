@@ -51,3 +51,6 @@ postman: manual
 
 clean-data:
 	@powershell -NoProfile -Command "$$confirmation = Read-Host 'Esto borrará los volúmenes PostgreSQL y Redis del proyecto. Escribe BORRAR para continuar'; if ($$confirmation -cne 'BORRAR') { Write-Host 'Cancelado'; exit 1 }; docker compose down -v"
+
+reconstruct-triage:
+	@docker compose up --build -d triage
