@@ -24,7 +24,7 @@ public class SpringAiAnswerGenerator implements ClinicalAnswerGenerator {
 		ChatClient.Builder chatClientBuilder,
 		CircuitBreaker circuitBreaker,
 		MeterRegistry meterRegistry,
-		@Value("${spring.ai.openai.api-key:}") String apiKey
+		@Value("${spring.ai.google.genai.api-key:}") String apiKey
 	) {
 		this.chatClient = chatClientBuilder.build();
 		this.circuitBreaker = circuitBreaker;

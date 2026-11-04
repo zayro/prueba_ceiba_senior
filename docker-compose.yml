@@ -86,7 +86,7 @@ services:
     environment:
       API_KEY: ${API_KEY:?Set API_KEY in .env}
       LLM_API_KEY: ${LLM_API_KEY:?Set LLM_API_KEY in .env}
-      LLM_MODEL: ${LLM_MODEL:-gpt-4o-mini}
+      LLM_MODEL: ${LLM_MODEL:-gemini-3.8-flash}
       KAFKA_BOOTSTRAP_SERVERS: kafka:9092
       REDIS_HOST: redis
       REDIS_PORT: 6379

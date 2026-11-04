@@ -29,7 +29,7 @@ dependencies {
 	implementation 'org.springframework.boot:spring-boot-starter-actuator'
 	implementation 'org.springframework.boot:spring-boot-starter-data-redis-reactive'
 	implementation 'org.springframework.kafka:spring-kafka'
-	implementation 'org.springframework.ai:spring-ai-starter-model-openai'
+	implementation 'org.springframework.ai:spring-ai-starter-model-google-genai'
 	implementation 'io.github.resilience4j:resilience4j-reactor:2.3.0'
 	implementation 'io.github.resilience4j:resilience4j-circuitbreaker:2.3.0'
 	implementation 'io.github.resilience4j:resilience4j-micrometer:2.3.0'

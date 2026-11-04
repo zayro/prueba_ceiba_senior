@@ -8,7 +8,7 @@ data:
   REDIS_HOST: "redis.example.internal"
   REDIS_PORT: "6379"
   TRIAGE_SCHEDULER_DELAY_MS: "10000"
-  LLM_MODEL: "gpt-4o-mini"
+  LLM_MODEL: "gemini-3.8-flash"
 ---
 apiVersion: apps/v1
 kind: Deployment

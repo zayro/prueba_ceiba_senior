@@ -3,7 +3,7 @@
 Implementación backend de la prueba técnica con dos aplicaciones independientes en Java 21 y Spring Boot 3.5:
 
 - **Triage** (`:bootJar`, puerto 8080): API reactiva, reglas clínicas deterministas, R2DBC/PostgreSQL, auditoría, outbox Kafka, SLA y reportes SQL.
-- **Asistente clínico** (`:assistant-service:bootJar`, puerto 8081): Spring AI/OpenAI con recuperación del corpus, validación de citas y vista de urgencias en Redis alimentada solamente por Kafka.
+- **Asistente clínico** (`:assistant-service:bootJar`, puerto 8081): Spring AI/Google Gemini con recuperación del corpus, validación de citas y vista de urgencias en Redis alimentada solamente por Kafka.
 
 > **Uso clínico:** es una implementación de referencia para la prueba, no un dispositivo médico ni un sustituto del criterio profesional. No utilizar para decisiones clínicas reales sin revisión, validación clínica, privacidad, seguridad y controles regulatorios.
 
@@ -18,7 +18,7 @@ flowchart LR
     Outbox -->|Kafka, key = patientId| Kafka[(triaje.eventos)]
     Kafka -->|consumidor con ACK tras proyección| Assistant
     Assistant --> Redis[(Redis: vista de pacientes activos)]
-    Assistant -->|RAG + circuit breaker| LLM[Proveedor OpenAI-compatible]
+    Assistant -->|RAG + circuit breaker| Gemini[Google Gemini]
     Triage --> Metrics[Actuator / Micrometer / Prometheus]
     Assistant --> Metrics
 ```
@@ -29,9 +29,9 @@ El asistente consume el topic `triaje.eventos`, confirma el offset solo después
 
 ## Ejecución local
 
-Requisitos: Docker Compose y una API key válida del proveedor compatible con OpenAI para probar consultas con coincidencias.
+Requisitos: Docker Compose y una API key de Google AI Studio para probar consultas con coincidencias.
 
-1. Ejecuta `make setup` para copiar `.env.example` a `.env` si todavía no existe. Edita el archivo y reemplaza `API_KEY`, `DB_PASSWORD` y `LLM_API_KEY`. Compose exige las tres variables; no se incluyen credenciales predeterminadas.
+1. Ejecuta `make setup` para copiar `.env.example` a `.env` si todavía no existe. Edita el archivo y reemplaza `API_KEY`, `DB_PASSWORD` y `LLM_API_KEY` con una clave de Google AI Studio. Compose exige las tres variables; no se incluyen credenciales predeterminadas. El modelo por defecto es `gemini-3.8-flash`; puedes cambiarlo con `LLM_MODEL`.
 2. Desde la raíz ejecuta `make up` para construir e iniciar todos los contenedores:
 
    ```powershell
@@ -98,7 +98,7 @@ Los niveles siguen el orden de gravedad del enunciado: `CRITICO`, `URGENTE`, `UR
 - `POST /asistente/consulta`: recibe `{"pregunta":"¿Cuáles son las medidas iniciales ante una crisis hipertensiva?"}` y responde `{"respuesta":"... [PROTO-001]","fuentes":[{"protocolo":"PROTO-001","seccion":"Manejo inicial"}]}`.
 - `GET /asistente/estado-urgencias`: cuenta pacientes activos por nivel desde la proyección Redis; no llama a la API de Triage.
 
-Si no hay coincidencia en `clinical-protocols.json`, devuelve exclusivamente `No existe un protocolo disponible para la pregunta.` y `fuentes: []`, sin llamar al modelo. El proveedor se configura con `LLM_API_KEY` y opcionalmente `LLM_MODEL`. Sin proveedor disponible o con el circuit breaker abierto, las consultas coincidentes devuelven 503 explícito.
+Si no hay coincidencia en `clinical-protocols.json`, devuelve exclusivamente `No existe un protocolo disponible para la pregunta.` y `fuentes: []`, sin llamar al modelo. Google Gemini se configura con una API key de Google AI Studio en `LLM_API_KEY` y opcionalmente con `LLM_MODEL` (por defecto `gemini-3.8-flash`). Sin proveedor disponible o con el circuit breaker abierto, las consultas coincidentes devuelven 503 explícito.
 
 La respuesta generada se acepta solo si cita protocolos recuperados y el texto, al retirar las citas, aparece literalmente en la evidencia recuperada. Si no supera esa comprobación, se responde con extractos literales del corpus y sus IDs. Esta validación extractiva evita aceptar paráfrasis no verificables; no reemplaza la revisión clínica del corpus.
 
