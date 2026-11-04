@@ -6,8 +6,8 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import com.example.ceiba.domain.model.TriageEvent;
-import com.example.ceiba.domain.port.OutboxStore;
-import com.example.ceiba.domain.port.TriageEventPublisher;
+import com.example.ceiba.domain.port.outbound.OutboxStore;
+import com.example.ceiba.domain.port.outbound.TriageEventPublisher;
 import java.time.Clock;
 import java.time.Instant;
 import java.time.ZoneOffset;

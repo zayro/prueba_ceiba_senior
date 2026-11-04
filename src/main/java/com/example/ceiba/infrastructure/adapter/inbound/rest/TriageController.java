@@ -1,7 +1,7 @@
-package com.example.ceiba.infrastructure.web;
+package com.example.ceiba.infrastructure.adapter.inbound.rest;
 
-import com.example.ceiba.domain.model.PatientState;
-import com.example.ceiba.domain.port.TriageUseCases;
+import com.example.ceiba.domain.valueobject.PatientState;
+import com.example.ceiba.domain.port.inbound.TriageUseCases;
 import com.example.ceiba.infrastructure.mapper.TriageWebMapper;
 import jakarta.validation.Valid;
 import java.time.Instant;

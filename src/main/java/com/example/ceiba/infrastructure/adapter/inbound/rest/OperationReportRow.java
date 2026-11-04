@@ -1,4 +1,4 @@
-package com.example.ceiba.infrastructure.web;
+package com.example.ceiba.infrastructure.adapter.inbound.rest;
 
 import java.time.Instant;
 

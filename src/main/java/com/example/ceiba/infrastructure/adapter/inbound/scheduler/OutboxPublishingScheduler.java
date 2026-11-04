@@ -1,6 +1,6 @@
-package com.example.ceiba.infrastructure.adapter.scheduler;
+package com.example.ceiba.infrastructure.adapter.inbound.scheduler;
 
-import com.example.ceiba.domain.port.OutboxPublishingUseCase;
+import com.example.ceiba.domain.port.inbound.OutboxPublishingUseCase;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.scheduling.annotation.Scheduled;

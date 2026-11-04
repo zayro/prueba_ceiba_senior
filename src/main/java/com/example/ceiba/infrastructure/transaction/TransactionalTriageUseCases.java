@@ -1,10 +1,10 @@
-package com.example.ceiba.infrastructure.adapter.transaction;
+package com.example.ceiba.infrastructure.transaction;
 
 import com.example.ceiba.domain.model.OperationReport;
-import com.example.ceiba.domain.model.PatientData;
+import com.example.ceiba.domain.valueobject.PatientData;
 import com.example.ceiba.domain.model.PatientDetails;
-import com.example.ceiba.domain.model.PatientState;
-import com.example.ceiba.domain.port.TriageUseCases;
+import com.example.ceiba.domain.valueobject.PatientState;
+import com.example.ceiba.domain.port.inbound.TriageUseCases;
 import com.example.ceiba.application.service.TriageService;
 import java.time.Instant;
 import java.util.UUID;

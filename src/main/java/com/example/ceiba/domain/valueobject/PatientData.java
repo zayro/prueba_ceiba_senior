@@ -1,4 +1,4 @@
-package com.example.ceiba.domain.model;
+package com.example.ceiba.domain.valueobject;
 
 import java.math.BigDecimal;
 

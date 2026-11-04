@@ -1,4 +1,4 @@
-package com.example.ceiba.domain.port;
+package com.example.ceiba.domain.port.inbound;
 
 import org.reactivestreams.Publisher;
 

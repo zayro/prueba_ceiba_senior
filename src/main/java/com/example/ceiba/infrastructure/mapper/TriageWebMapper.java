@@ -2,12 +2,12 @@ package com.example.ceiba.infrastructure.mapper;
 
 import com.example.ceiba.domain.model.OperationReport;
 import com.example.ceiba.domain.model.PatientAudit;
-import com.example.ceiba.domain.model.PatientData;
+import com.example.ceiba.domain.valueobject.PatientData;
 import com.example.ceiba.domain.model.PatientDetails;
-import com.example.ceiba.infrastructure.web.AuditResponse;
-import com.example.ceiba.infrastructure.web.OperationReportRow;
-import com.example.ceiba.infrastructure.web.PatientResponse;
-import com.example.ceiba.infrastructure.web.RegisterPatientRequest;
+import com.example.ceiba.infrastructure.adapter.inbound.rest.AuditResponse;
+import com.example.ceiba.infrastructure.adapter.inbound.rest.OperationReportRow;
+import com.example.ceiba.infrastructure.adapter.inbound.rest.PatientResponse;
+import com.example.ceiba.infrastructure.adapter.inbound.rest.RegisterPatientRequest;
 import java.util.List;
 import org.springframework.stereotype.Component;
 

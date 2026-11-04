@@ -1,4 +1,4 @@
-package com.example.ceiba.domain.model;
+package com.example.ceiba.domain.valueobject;
 
 public enum PatientState {
 	REGISTRADO,

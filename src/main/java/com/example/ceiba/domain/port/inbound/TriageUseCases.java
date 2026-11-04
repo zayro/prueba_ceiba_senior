@@ -1,9 +1,9 @@
-package com.example.ceiba.domain.port;
+package com.example.ceiba.domain.port.inbound;
 
 import com.example.ceiba.domain.model.OperationReport;
-import com.example.ceiba.domain.model.PatientData;
+import com.example.ceiba.domain.valueobject.PatientData;
 import com.example.ceiba.domain.model.PatientDetails;
-import com.example.ceiba.domain.model.PatientState;
+import com.example.ceiba.domain.valueobject.PatientState;
 import java.time.Instant;
 import java.util.UUID;
 import org.reactivestreams.Publisher;

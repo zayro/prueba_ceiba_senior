@@ -2,11 +2,11 @@ package com.example.ceiba.infrastructure.mapper;
 
 import com.example.ceiba.domain.model.Patient;
 import com.example.ceiba.domain.model.PatientAudit;
-import com.example.ceiba.domain.model.PatientData;
-import com.example.ceiba.domain.model.PatientState;
-import com.example.ceiba.domain.model.TriageLevel;
-import com.example.ceiba.infrastructure.persistence.AuditEntity;
-import com.example.ceiba.infrastructure.persistence.PatientEntity;
+import com.example.ceiba.domain.valueobject.PatientData;
+import com.example.ceiba.domain.valueobject.PatientState;
+import com.example.ceiba.domain.valueobject.TriageLevel;
+import com.example.ceiba.infrastructure.adapter.outbound.persistence.AuditEntity;
+import com.example.ceiba.infrastructure.adapter.outbound.persistence.PatientEntity;
 import org.springframework.stereotype.Component;
 
 @Component

@@ -1,4 +1,4 @@
-package com.example.ceiba.domain.port;
+package com.example.ceiba.domain.port.outbound;
 
 import com.example.ceiba.domain.model.OperationReport;
 import java.time.Instant;

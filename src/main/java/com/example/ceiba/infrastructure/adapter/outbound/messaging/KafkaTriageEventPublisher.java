@@ -1,7 +1,7 @@
-package com.example.ceiba.infrastructure.adapter.messaging;
+package com.example.ceiba.infrastructure.adapter.outbound.messaging;
 
 import com.example.ceiba.domain.model.TriageEvent;
-import com.example.ceiba.domain.port.TriageEventPublisher;
+import com.example.ceiba.domain.port.outbound.TriageEventPublisher;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.beans.factory.annotation.Value;

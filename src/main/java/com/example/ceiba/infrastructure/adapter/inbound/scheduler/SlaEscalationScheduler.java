@@ -1,8 +1,8 @@
-package com.example.ceiba.infrastructure.adapter.scheduler;
+package com.example.ceiba.infrastructure.adapter.inbound.scheduler;
 
-import com.example.ceiba.domain.model.PatientState;
-import com.example.ceiba.domain.port.PatientStore;
-import com.example.ceiba.domain.port.TriageUseCases;
+import com.example.ceiba.domain.valueobject.PatientState;
+import com.example.ceiba.domain.port.outbound.PatientStore;
+import com.example.ceiba.domain.port.inbound.TriageUseCases;
 import java.util.concurrent.atomic.AtomicBoolean;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

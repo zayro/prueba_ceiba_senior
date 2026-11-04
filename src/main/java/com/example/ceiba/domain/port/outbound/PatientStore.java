@@ -1,6 +1,6 @@
-package com.example.ceiba.domain.port;
+package com.example.ceiba.domain.port.outbound;
 
-import com.example.ceiba.domain.model.PatientState;
+import com.example.ceiba.domain.valueobject.PatientState;
 import com.example.ceiba.domain.model.Patient;
 import java.time.Instant;
 import java.util.UUID;

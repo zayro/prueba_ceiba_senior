@@ -1,6 +1,6 @@
-package com.example.ceiba.domain.port;
+package com.example.ceiba.domain.port.outbound;
 
-import com.example.ceiba.domain.model.TriageLevel;
+import com.example.ceiba.domain.valueobject.TriageLevel;
 
 public interface TriageMetrics {
 	void classificationRecorded(TriageLevel level);

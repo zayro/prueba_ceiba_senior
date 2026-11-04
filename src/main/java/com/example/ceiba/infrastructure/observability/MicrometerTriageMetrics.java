@@ -1,7 +1,7 @@
-package com.example.ceiba.infrastructure.adapter.metrics;
+package com.example.ceiba.infrastructure.observability;
 
-import com.example.ceiba.domain.model.TriageLevel;
-import com.example.ceiba.domain.port.TriageMetrics;
+import com.example.ceiba.domain.valueobject.TriageLevel;
+import com.example.ceiba.domain.port.outbound.TriageMetrics;
 import io.micrometer.core.instrument.MeterRegistry;
 import org.springframework.stereotype.Component;
 

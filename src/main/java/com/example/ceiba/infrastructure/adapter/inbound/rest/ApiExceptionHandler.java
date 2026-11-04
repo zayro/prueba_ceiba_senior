@@ -1,7 +1,7 @@
-package com.example.ceiba.infrastructure.web;
+package com.example.ceiba.infrastructure.adapter.inbound.rest;
 
-import com.example.ceiba.application.exception.InvalidTransitionException;
-import com.example.ceiba.application.exception.PatientNotFoundException;
+import com.example.ceiba.domain.exception.InvalidTransitionException;
+import com.example.ceiba.domain.exception.PatientNotFoundException;
 import jakarta.validation.ConstraintViolationException;
 import java.time.Instant;
 import org.slf4j.Logger;

@@ -1,5 +1,8 @@
 package com.example.ceiba.domain.model;
 
+import com.example.ceiba.domain.valueobject.TriageLevel;
+import com.example.ceiba.domain.valueobject.PatientData;
+
 import java.util.Set;
 import java.text.Normalizer;
 

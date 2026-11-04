@@ -1,4 +1,4 @@
-package com.example.ceiba.infrastructure.persistence;
+package com.example.ceiba.infrastructure.adapter.outbound.persistence;
 
 import java.util.UUID;
 import org.springframework.data.repository.reactive.ReactiveCrudRepository;
