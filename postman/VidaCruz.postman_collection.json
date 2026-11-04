@@ -1,0 +1,479 @@
+{
+  "info": {
+    "_postman_id": "51b78767-6965-4fde-a180-efcf5af14d95",
+    "name": "VidaCruz - Triaje y Asistente Clínico",
+    "description": "Pruebas manuales ordenadas para los servicios locales. Importa también el entorno VidaCruz Local, configura apiKey desde .env y ejecuta la colección secuencialmente. Las consultas sobre protocolos conocidos requieren LLM_API_KEY válida; la prueba sin coincidencia no llama al LLM.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "triageUrl", "value": "http://localhost:8080" },
+    { "key": "assistantUrl", "value": "http://localhost:8081" },
+    { "key": "apiKey", "value": "replace-with-a-random-api-key" },
+    { "key": "patientId", "value": "" },
+    { "key": "desde", "value": "" },
+    { "key": "hasta", "value": "" }
+  ],
+  "item": [
+    {
+      "name": "01 - Health",
+      "item": [
+        {
+          "name": "Triage readiness",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{triageUrl}}/actuator/health/readiness"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Triage readiness responde 200 y UP', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "  pm.expect(pm.response.json().status).to.eql('UP');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Asistente readiness",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{assistantUrl}}/actuator/health/readiness"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Asistente readiness responde 200 y UP', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "  pm.expect(pm.response.json().status).to.eql('UP');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "02 - Triage",
+      "item": [
+        {
+          "name": "Registrar paciente E1 - CRITICO",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Paciente registrado con clasificación CRITICO', function () {",
+                  "  pm.response.to.have.status(201);",
+                  "  const body = pm.response.json();",
+                  "  pm.expect(body.level).to.eql('CRITICO');",
+                  "  pm.expect(body.state).to.eql('REGISTRADO');",
+                  "  pm.expect(body.slaMinutes).to.be.a('number').and.to.be.above(0);",
+                  "  pm.expect(body.id).to.be.a('string');",
+                  "  pm.collectionVariables.set('patientId', body.id);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "X-API-Key", "value": "{{apiKey}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"fullName\": \"Paciente Postman\",\n  \"age\": 45,\n  \"heartRate\": 130,\n  \"systolicPressure\": 180,\n  \"diastolicPressure\": 110,\n  \"oxygenSaturation\": 97,\n  \"temperature\": 36.8,\n  \"pain\": 8,\n  \"gcs\": 15,\n  \"chiefComplaint\": \"Dolor torácico\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": "{{triageUrl}}/triage/pacientes"
+          }
+        },
+        {
+          "name": "Consultar paciente y auditoría",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "X-API-Key", "value": "{{apiKey}}" }],
+            "url": "{{triageUrl}}/triage/pacientes/{{patientId}}"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Paciente y auditoría de registro', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "  const body = pm.response.json();",
+                  "  pm.expect(body.id).to.eql(pm.collectionVariables.get('patientId'));",
+                  "  pm.expect(body.audit).to.be.an('array').that.is.not.empty;",
+                  "  pm.expect(body.secondsInCurrentState).to.be.a('number');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Cambiar estado a EN_CONSULTA",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "X-API-Key", "value": "{{apiKey}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"state\": \"EN_CONSULTA\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": "{{triageUrl}}/triage/pacientes/{{patientId}}/estado"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Transición a EN_CONSULTA', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "  pm.expect(pm.response.json().state).to.eql('EN_CONSULTA');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Cambiar estado a ALTA",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "X-API-Key", "value": "{{apiKey}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"state\": \"ALTA\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": "{{triageUrl}}/triage/pacientes/{{patientId}}/estado"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Transición a ALTA', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "  pm.expect(pm.response.json().state).to.eql('ALTA');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Rechazar transición ALTA a EN_CONSULTA (409)",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "X-API-Key", "value": "{{apiKey}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"state\": \"EN_CONSULTA\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": "{{triageUrl}}/triage/pacientes/{{patientId}}/estado"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Transición inválida devuelve 409', function () {",
+                  "  pm.response.to.have.status(409);",
+                  "  pm.expect(pm.response.json().message).to.include('Transición no permitida');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Validación: diastólica mayor que sistólica (400)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "X-API-Key", "value": "{{apiKey}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"fullName\": \"Paciente Inválido\",\n  \"age\": 45,\n  \"heartRate\": 80,\n  \"systolicPressure\": 100,\n  \"diastolicPressure\": 110,\n  \"oxygenSaturation\": 98,\n  \"temperature\": 36.5,\n  \"pain\": 2,\n  \"gcs\": 15,\n  \"chiefComplaint\": \"Control\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": "{{triageUrl}}/triage/pacientes"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('La presión diastólica inválida devuelve 400', function () {",
+                  "  pm.response.to.have.status(400);",
+                  "  pm.expect(pm.response.json().message).to.include('diastolicPressure');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Reporte operativo por hora",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const now = new Date();",
+                  "pm.collectionVariables.set('desde', new Date(now.getTime() - 86400000).toISOString());",
+                  "pm.collectionVariables.set('hasta', new Date(now.getTime() + 60000).toISOString());"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Reporte devuelve agregado horario y p95', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "  const rows = pm.response.json();",
+                  "  pm.expect(rows).to.be.an('array');",
+                  "  if (rows.length) {",
+                  "    pm.expect(rows[0]).to.have.property('hour');",
+                  "    pm.expect(rows[0]).to.have.property('total');",
+                  "    pm.expect(rows[0]).to.have.property('p95WaitMinutes');",
+                  "  }",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "X-API-Key", "value": "{{apiKey}}" }],
+            "url": "{{triageUrl}}/triage/reportes/operacion?desde={{desde}}&hasta={{hasta}}"
+          }
+        }
+      ]
+    },
+    {
+      "name": "03 - Asistente Clínico",
+      "item": [
+        {
+          "name": "Conteo activo por nivel (proyección Kafka/Redis)",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "X-API-Key", "value": "{{apiKey}}" }],
+            "url": "{{assistantUrl}}/asistente/estado-urgencias"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Vista de urgencias incluye todos los niveles', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "  const body = pm.response.json();",
+                  "  ['CRITICO', 'URGENTE', 'URGENTE_2', 'NO_URGENTE', 'NO_URGENTE_2'].forEach(function (level) {",
+                  "    pm.expect(body[level]).to.be.a('number');",
+                  "  });",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "RAG: pregunta sin protocolo (no llama al LLM)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "X-API-Key", "value": "{{apiKey}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"pregunta\": \"¿Cuál es el tratamiento de primera línea para diabetes tipo 2?\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": "{{assistantUrl}}/asistente/consulta"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Sin evidencia no se genera contenido clínico', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "  const body = pm.response.json();",
+                  "  pm.expect(body.respuesta).to.eql('No existe un protocolo disponible para la pregunta.');",
+                  "  pm.expect(body.fuentes).to.be.an('array').that.is.empty;",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "RAG: consulta con protocolo (LLM configurado)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "X-API-Key", "value": "{{apiKey}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"pregunta\": \"¿Cuáles son las medidas iniciales ante una crisis hipertensiva?\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": "{{assistantUrl}}/asistente/consulta"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Respuesta citada o degradación explícita', function () {",
+                  "  pm.expect([200, 503]).to.include(pm.response.code);",
+                  "  if (pm.response.code === 200) {",
+                  "    const body = pm.response.json();",
+                  "    pm.expect(body.fuentes).to.be.an('array').that.is.not.empty;",
+                  "    body.fuentes.forEach(function (source) {",
+                  "      pm.expect(source.protocolo).to.match(/^PROTO-\\\\d{3}$/);",
+                  "      pm.expect(body.respuesta).to.include('[' + source.protocolo + ']');",
+                  "    });",
+                  "  } else {",
+                  "    pm.expect(pm.response.json().message).to.include('Proveedor de IA');",
+                  "  }",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Autenticación: omitir API key (401)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{assistantUrl}}/asistente/estado-urgencias"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Las APIs de negocio requieren API key', function () {",
+                  "  pm.response.to.have.status(401);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "04 - Escalamiento SLA (requiere SLA de prueba)",
+      "description": "Antes de empezar, ejecuta make up-fast-sla. Crea un paciente CRITICO y espera al menos 1 minuto antes de consultar el estado; el SLA del resto de niveles mantiene su configuración normal.",
+      "item": [
+        {
+          "name": "Crear paciente para prueba de escalamiento",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "X-API-Key", "value": "{{apiKey}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"fullName\": \"Paciente Prueba SLA\",\n  \"age\": 50,\n  \"heartRate\": 130,\n  \"systolicPressure\": 180,\n  \"diastolicPressure\": 110,\n  \"oxygenSaturation\": 97,\n  \"temperature\": 36.8,\n  \"pain\": 8,\n  \"gcs\": 15,\n  \"chiefComplaint\": \"Dolor torácico\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": "{{triageUrl}}/triage/pacientes"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Paciente CRITICO creado para SLA corto', function () {",
+                  "  pm.response.to.have.status(201);",
+                  "  const body = pm.response.json();",
+                  "  pm.expect(body.level).to.eql('CRITICO');",
+                  "  pm.collectionVariables.set('patientId', body.id);",
+                  "  pm.collectionVariables.set('slaPatientId', body.id);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Verificar escalamiento (ejecutar tras vencer el SLA)",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "X-API-Key", "value": "{{apiKey}}" }],
+            "url": "{{triageUrl}}/triage/pacientes/{{slaPatientId}}"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('SLA vencido: paciente escalado y auditado', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "  const body = pm.response.json();",
+                  "  pm.expect(body.escalated).to.eql(true);",
+                  "  const escalationEvents = body.audit.filter(function (entry) { return entry.eventType === 'paciente_escalado'; });",
+                  "  pm.expect(escalationEvents).to.have.lengthOf(1);",
+                  "  pm.expect(escalationEvents[0].previousEscalated).to.eql(false);",
+                  "  pm.expect(escalationEvents[0].newEscalated).to.eql(true);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
