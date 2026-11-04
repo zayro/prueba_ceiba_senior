@@ -9,6 +9,8 @@ Implementación backend de la prueba técnica con dos aplicaciones independiente
 
 ## Arquitectura
 
+Ambos servicios separan casos de uso y dominio de sus adaptadores. En Triage, `application.service` coordina casos de uso a través de `domain.port`; `domain.model` contiene las reglas y modelos del negocio. Los adaptadores R2DBC, HTTP, Kafka, métricas y scheduler viven en `infrastructure.adapter`; `infrastructure.mapper` traduce entre modelos y formatos externos, y `infrastructure.config` configura reglas, beans y límites transaccionales. En `assistant-service`, `application.service` contiene los casos de uso, `application.validation` las validaciones de respuestas fundamentadas y `application.model` sus resultados. Sus adaptadores HTTP, IA, Kafka y Redis están en `infrastructure.adapter`, con configuración, mapeadores y seguridad separados.
+
 ```mermaid
 flowchart LR
     Clinician[Personal clínico] -->|API key| Triage[Triage API - WebFlux]
