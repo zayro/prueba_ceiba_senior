@@ -37,6 +37,18 @@ services:
       timeout: 10s
       retries: 15
 
+  kafka-ui:
+    image: provectuslabs/kafka-ui:v0.7.2
+    environment:
+      KAFKA_CLUSTERS_0_NAME: local
+      KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS: kafka:9092
+      DYNAMIC_CONFIG_ENABLED: "false"
+    ports:
+      - "${KAFKA_UI_HOST_PORT:-8090}:8080"
+    depends_on:
+      kafka:
+        condition: service_healthy
+
   redis:
     image: redis/redis-stack-server:7.4.0-v8
     ports:

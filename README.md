@@ -99,6 +99,10 @@ Invoke-RestMethod -Method Post -Uri http://localhost:8080/triage/pacientes `
 
 Los niveles siguen el orden de gravedad del enunciado: `CRITICO`, `URGENTE`, `URGENTE_2`, `NO_URGENTE`, `NO_URGENTE_2`. Los SLA por defecto son 5, 10, 30, 60 y 120 minutos; son configurables con `TRIAGE_SLA_*_MINUTES`. El intervalo del scheduler se configura con `TRIAGE_SCHEDULER_DELAY_MS`.
 
+### Kafka UI (`http://localhost:8090`)
+
+`docker compose up -d` también levanta Kafka UI para inspeccionar topics, mensajes y consumer groups del broker local. El puerto se cambia con `KAFKA_UI_HOST_PORT`.
+
 ### Asistente (`http://localhost:8081`)
 
 - `POST /asistente/consulta`: recibe `{"pregunta":"¿Cuáles son las medidas iniciales ante una crisis hipertensiva?"}` y responde `{"respuesta":"... [PROTO-001]","fuentes":[{"protocolo":"PROTO-001","seccion":"Manejo inicial"}]}`.
