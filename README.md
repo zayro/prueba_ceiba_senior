@@ -71,6 +71,8 @@ Importa en Postman:
 
 Selecciona el entorno **VidaCruz Local** y asigna `apiKey` al mismo valor de `API_KEY` en `.env`. Ejecuta la colección secuencialmente: la solicitud de registro almacena automáticamente `patientId`, y las siguientes prueban auditoría, transiciones válidas/inválidas, validación, reporte, vista de urgencias y rechazo RAG cuando no hay fuente. La consulta con protocolo acepta `200` con citas verificables o `503` si el proveedor no está configurado/disponible.
 
+La carpeta `05 - Pacientes de pruebas unitarias` contiene los casos de clasificación y presión inválida de `TriageClassifierTest`. Cada solicitud válida crea un paciente persistente y comprueba su clasificación; no modifica el `patientId` usado por las demás carpetas.
+
 La carpeta `04 - Escalamiento SLA` requiere `make up-fast-sla`: crea un paciente crítico, espera al menos un minuto y luego ejecuta la consulta de verificación para confirmar que se escaló una sola vez y se auditó.
 
 `make manual` muestra URLs e instrucciones; `make smoke` ejecuta la comprobación HTTP automatizada equivalente para los flujos principales. `make test` ejecuta la suite Gradle; `make up-fast-sla` reinicia Triage con SLA corto para probar escalamiento.
