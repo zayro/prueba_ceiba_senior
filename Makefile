@@ -13,7 +13,7 @@ help:
 	@powershell -NoProfile -Command "Write-Host 'clean-data  Elimina contenedores y volumenes (destructivo)'"
 
 setup:
-	@powershell -NoProfile -Command "if (Test-Path .env) { Write-Host '.env ya existe; no se modifico' } else { Copy-Item .env.example .env; Write-Host 'Copia creada: edita .env y configura API_KEY, DB_PASSWORD y LLM_API_KEY' }"
+	@powershell -NoProfile -Command "if (Test-Path .env) { Write-Host '.env ya existe; no se modifico' } else { Copy-Item .env.example .env; Write-Host 'Copia creada: configura API_KEY y DB_PASSWORD. LLM_API_KEY es opcional para iniciar; se requiere para consultas RAG.' }"
 
 env-check:
 	@powershell -NoProfile -Command "if (!(Test-Path .env)) { Write-Error 'Falta .env. Ejecuta make setup y configura sus valores.'; exit 1 }"
