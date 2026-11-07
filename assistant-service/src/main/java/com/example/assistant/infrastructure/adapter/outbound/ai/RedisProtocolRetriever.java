@@ -1,8 +1,10 @@
 package com.example.assistant.infrastructure.adapter.outbound.ai;
 
+import com.example.assistant.domain.exception.LlmUnavailableException;
 import com.example.assistant.domain.model.Protocol;
 import com.example.assistant.domain.model.ProtocolCatalog;
 import com.example.assistant.domain.port.outbound.ProtocolRetriever;
+import com.google.genai.errors.ApiException;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
@@ -39,7 +41,14 @@ public class RedisProtocolRetriever implements ProtocolRetriever {
 			.topK(MAX_RESULTS)
 			.similarityThreshold(similarityThreshold)
 			.build();
-		return vectorStore.similaritySearch(searchRequest).stream()
+		List<Document> results;
+		try {
+			results = vectorStore.similaritySearch(searchRequest);
+		} catch (ApiException error) {
+			throw new LlmUnavailableException(
+				"Proveedor de embeddings no disponible; no se pueden consultar protocolos", error);
+		}
+		return results.stream()
 			.map(this::protocolFor)
 			.toList();
 	}
