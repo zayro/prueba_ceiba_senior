@@ -6,7 +6,7 @@
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "variable": [
-    { "key": "triageUrl", "value": "http://localhost:8080" },
+    { "key": "triageUrl", "value": "http://localhost:18080" },
     { "key": "assistantUrl", "value": "http://localhost:8081" },
     { "key": "apiKey", "value": "replace-with-a-random-api-key" },
     { "key": "patientId", "value": "" },
@@ -472,6 +472,195 @@
               }
             }
           ]
+        }
+      ]
+    },
+    {
+      "name": "05 - Pacientes de pruebas unitarias",
+      "description": "Ejemplos de TriageClassifierTest. Las solicitudes válidas crean pacientes persistentes y no modifican el patientId usado por las demás carpetas.",
+      "item": [
+        {
+          "name": "E1 - CRITICO por frecuencia cardíaca",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "X-API-Key", "value": "{{apiKey}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"fullName\": \"Paciente de prueba\",\n  \"age\": 40,\n  \"heartRate\": 130,\n  \"systolicPressure\": 180,\n  \"diastolicPressure\": 110,\n  \"oxygenSaturation\": 97,\n  \"temperature\": 36.8,\n  \"pain\": 8,\n  \"gcs\": 15,\n  \"chiefComplaint\": \"Dolor torácico\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": "{{triageUrl}}/triage/pacientes"
+          },
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "pm.test('Clasificación CRITICO', function () {",
+            "  pm.response.to.have.status(201);",
+            "  pm.expect(pm.response.json().level).to.eql('CRITICO');",
+            "  pm.expect(pm.response.json().state).to.eql('REGISTRADO');",
+            "});"
+          ] } }]
+        },
+        {
+          "name": "E2 - URGENTE por saturación",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "X-API-Key", "value": "{{apiKey}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"fullName\": \"Paciente de prueba\",\n  \"age\": 40,\n  \"heartRate\": 95,\n  \"systolicPressure\": 150,\n  \"diastolicPressure\": 95,\n  \"oxygenSaturation\": 91,\n  \"temperature\": 37.0,\n  \"pain\": 4,\n  \"gcs\": 15,\n  \"chiefComplaint\": \"Dificultad para respirar\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": "{{triageUrl}}/triage/pacientes"
+          },
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "pm.test('Clasificación URGENTE', function () {",
+            "  pm.response.to.have.status(201);",
+            "  pm.expect(pm.response.json().level).to.eql('URGENTE');",
+            "  pm.expect(pm.response.json().state).to.eql('REGISTRADO');",
+            "});"
+          ] } }]
+        },
+        {
+          "name": "E3 - URGENTE_2 por temperatura",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "X-API-Key", "value": "{{apiKey}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"fullName\": \"Paciente de prueba\",\n  \"age\": 40,\n  \"heartRate\": 88,\n  \"systolicPressure\": 130,\n  \"diastolicPressure\": 85,\n  \"oxygenSaturation\": 98,\n  \"temperature\": 38.2,\n  \"pain\": 6,\n  \"gcs\": 15,\n  \"chiefComplaint\": \"Fiebre\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": "{{triageUrl}}/triage/pacientes"
+          },
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "pm.test('Clasificación URGENTE_2', function () {",
+            "  pm.response.to.have.status(201);",
+            "  pm.expect(pm.response.json().level).to.eql('URGENTE_2');",
+            "  pm.expect(pm.response.json().state).to.eql('REGISTRADO');",
+            "});"
+          ] } }]
+        },
+        {
+          "name": "E4 - NO_URGENTE",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "X-API-Key", "value": "{{apiKey}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"fullName\": \"Paciente de prueba\",\n  \"age\": 40,\n  \"heartRate\": 72,\n  \"systolicPressure\": 120,\n  \"diastolicPressure\": 80,\n  \"oxygenSaturation\": 99,\n  \"temperature\": 36.5,\n  \"pain\": 2,\n  \"gcs\": 15,\n  \"chiefComplaint\": \"Herida por cortar\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": "{{triageUrl}}/triage/pacientes"
+          },
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "pm.test('Clasificación NO_URGENTE', function () {",
+            "  pm.response.to.have.status(201);",
+            "  pm.expect(pm.response.json().level).to.eql('NO_URGENTE');",
+            "  pm.expect(pm.response.json().state).to.eql('REGISTRADO');",
+            "});"
+          ] } }]
+        },
+        {
+          "name": "E5 - NO_URGENTE_2 por renovación de recetario",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "X-API-Key", "value": "{{apiKey}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"fullName\": \"Paciente de prueba\",\n  \"age\": 40,\n  \"heartRate\": 70,\n  \"systolicPressure\": 115,\n  \"diastolicPressure\": 75,\n  \"oxygenSaturation\": 99,\n  \"temperature\": 36.4,\n  \"pain\": 0,\n  \"gcs\": 15,\n  \"chiefComplaint\": \"Renovación de recetario\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": "{{triageUrl}}/triage/pacientes"
+          },
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "pm.test('Clasificación NO_URGENTE_2', function () {",
+            "  pm.response.to.have.status(201);",
+            "  pm.expect(pm.response.json().level).to.eql('NO_URGENTE_2');",
+            "  pm.expect(pm.response.json().state).to.eql('REGISTRADO');",
+            "});"
+          ] } }]
+        },
+        {
+          "name": "E5 - NO_URGENTE_2 por vacunación en mayúsculas",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "X-API-Key", "value": "{{apiKey}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"fullName\": \"Paciente de prueba\",\n  \"age\": 40,\n  \"heartRate\": 70,\n  \"systolicPressure\": 115,\n  \"diastolicPressure\": 75,\n  \"oxygenSaturation\": 99,\n  \"temperature\": 36.4,\n  \"pain\": 0,\n  \"gcs\": 15,\n  \"chiefComplaint\": \"VACUNACION\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": "{{triageUrl}}/triage/pacientes"
+          },
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "pm.test('Clasificación NO_URGENTE_2', function () {",
+            "  pm.response.to.have.status(201);",
+            "  pm.expect(pm.response.json().level).to.eql('NO_URGENTE_2');",
+            "  pm.expect(pm.response.json().state).to.eql('REGISTRADO');",
+            "});"
+          ] } }]
+        },
+        {
+          "name": "E6 - CRITICO por signos vitales y Glasgow",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "X-API-Key", "value": "{{apiKey}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"fullName\": \"Paciente de prueba\",\n  \"age\": 40,\n  \"heartRate\": 35,\n  \"systolicPressure\": 80,\n  \"diastolicPressure\": 50,\n  \"oxygenSaturation\": 85,\n  \"temperature\": 35.9,\n  \"pain\": 0,\n  \"gcs\": 6,\n  \"chiefComplaint\": \"Inconsciente\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": "{{triageUrl}}/triage/pacientes"
+          },
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "pm.test('Clasificación CRITICO', function () {",
+            "  pm.response.to.have.status(201);",
+            "  pm.expect(pm.response.json().level).to.eql('CRITICO');",
+            "  pm.expect(pm.response.json().state).to.eql('REGISTRADO');",
+            "});"
+          ] } }]
+        },
+        {
+          "name": "Validación - presión diastólica igual a sistólica",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "X-API-Key", "value": "{{apiKey}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"fullName\": \"Paciente de prueba\",\n  \"age\": 40,\n  \"heartRate\": 80,\n  \"systolicPressure\": 120,\n  \"diastolicPressure\": 120,\n  \"oxygenSaturation\": 98,\n  \"temperature\": 36.5,\n  \"pain\": 2,\n  \"gcs\": 15,\n  \"chiefComplaint\": \"Control\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": "{{triageUrl}}/triage/pacientes"
+          },
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "pm.test('Presión inválida rechazada', function () {",
+            "  pm.response.to.have.status(400);",
+            "  pm.expect(pm.response.json().message).to.include('diastolicPressure');",
+            "});"
+          ] } }]
         }
       ]
     }

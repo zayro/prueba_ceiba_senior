@@ -7,8 +7,11 @@ data:
   KAFKA_BOOTSTRAP_SERVERS: "kafka.example.internal:9092"
   REDIS_HOST: "redis.example.internal"
   REDIS_PORT: "6379"
+  REDIS_SSL: "true"
   TRIAGE_SCHEDULER_DELAY_MS: "10000"
-  LLM_MODEL: "gpt-4o-mini"
+  LLM_MODEL: "gemini-3.8-flash"
+  EMBEDDING_MODEL: "gemini-embedding-001"
+  RAG_SIMILARITY_THRESHOLD: "0.82"
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -124,6 +127,18 @@ spec:
                 secretKeyRef:
                   name: vidacruz-secrets
                   key: llm-api-key
+            - name: REDIS_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: vidacruz-secrets
+                  key: redis-username
+                  optional: true
+            - name: REDIS_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: vidacruz-secrets
+                  key: redis-password
+                  optional: true
           envFrom:
             - configMapRef:
                 name: vidacruz-config

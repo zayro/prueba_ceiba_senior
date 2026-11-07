@@ -1,7 +1,14 @@
 package com.example.assistant.infrastructure.config;
 
-import com.example.assistant.domain.Protocol;
-import com.example.assistant.domain.ProtocolRetriever;
+import com.example.assistant.application.service.ClinicalAssistant;
+import com.example.assistant.application.service.UrgencyService;
+import com.example.assistant.application.validation.AnswerGroundingValidator;
+import com.example.assistant.domain.model.Protocol;
+import com.example.assistant.domain.model.ProtocolCatalog;
+import com.example.assistant.domain.port.outbound.ActiveUrgencyProjection;
+import com.example.assistant.domain.port.outbound.ClinicalAnswerGenerator;
+import com.example.assistant.domain.port.outbound.ProtocolRetriever;
+import com.example.assistant.infrastructure.adapter.outbound.ai.RedisProtocolRetriever;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.github.resilience4j.circuitbreaker.CircuitBreaker;
@@ -11,6 +18,8 @@ import io.micrometer.core.instrument.MeterRegistry;
 import java.io.IOException;
 import java.time.Duration;
 import java.util.List;
+import org.springframework.ai.vectorstore.VectorStore;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.io.ClassPathResource;
@@ -18,12 +27,40 @@ import org.springframework.core.io.ClassPathResource;
 @Configuration
 public class AssistantConfiguration {
 	@Bean
-	ProtocolRetriever protocolRetriever(ObjectMapper objectMapper) throws IOException {
+	AnswerGroundingValidator answerGroundingValidator() {
+		return new AnswerGroundingValidator();
+	}
+
+	@Bean
+	ClinicalAssistant clinicalAssistant(
+		ProtocolRetriever protocolRetriever,
+		ClinicalAnswerGenerator answerGenerator,
+		AnswerGroundingValidator answerGroundingValidator
+	) {
+		return new ClinicalAssistant(protocolRetriever, answerGenerator, answerGroundingValidator);
+	}
+
+	@Bean
+	UrgencyService urgencyService(ActiveUrgencyProjection projection) {
+		return new UrgencyService(projection);
+	}
+
+	@Bean
+	ProtocolCatalog protocolCatalog(ObjectMapper objectMapper) throws IOException {
 		List<Protocol> protocols = objectMapper.readValue(
 			new ClassPathResource("clinical-protocols.json").getInputStream(),
 			new TypeReference<>() { }
 		);
-		return new ProtocolRetriever(protocols);
+		return new ProtocolCatalog(protocols);
+	}
+
+	@Bean
+	ProtocolRetriever protocolRetriever(
+		VectorStore vectorStore,
+		ProtocolCatalog protocolCatalog,
+		@Value("${assistant.rag.similarity-threshold:0.82}") double similarityThreshold
+	) {
+		return new RedisProtocolRetriever(vectorStore, protocolCatalog, similarityThreshold);
 	}
 
 	@Bean

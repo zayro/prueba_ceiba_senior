@@ -1,13 +1,27 @@
 package com.example.ceiba.infrastructure.config;
 
-import com.example.ceiba.domain.TriageClassifier;
-import com.example.ceiba.domain.SlaPolicy;
-import com.example.ceiba.domain.TriageLevel;
+import com.example.ceiba.application.service.TriageService;
+import com.example.ceiba.application.service.OutboxPublishingService;
+import com.example.ceiba.domain.valueobject.SlaPolicy;
+import com.example.ceiba.domain.model.TriageClassifier;
+import com.example.ceiba.domain.valueobject.TriageLevel;
+import com.example.ceiba.domain.port.outbound.AuditStore;
+import com.example.ceiba.domain.port.outbound.OperationReportStore;
+import com.example.ceiba.domain.port.outbound.OutboxStore;
+import com.example.ceiba.domain.port.inbound.OutboxPublishingUseCase;
+import com.example.ceiba.domain.port.outbound.PatientStore;
+import com.example.ceiba.domain.port.outbound.TriageMetrics;
+import com.example.ceiba.domain.port.outbound.TriageEventPublisher;
+import com.example.ceiba.domain.port.inbound.TriageUseCases;
+import com.example.ceiba.infrastructure.transaction.TransactionalTriageUseCases;
+import java.time.Clock;
 import java.util.Map;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.scheduling.annotation.EnableScheduling;
+import org.springframework.transaction.ReactiveTransactionManager;
+import org.springframework.transaction.reactive.TransactionalOperator;
 
 @Configuration
 @EnableScheduling
@@ -15,6 +29,43 @@ public class TriageConfiguration {
 	@Bean
 	TriageClassifier triageClassifier() {
 		return new TriageClassifier();
+	}
+
+	@Bean
+	Clock clock() {
+		return Clock.systemUTC();
+	}
+
+	@Bean
+	TriageService triageService(
+		PatientStore patients,
+		AuditStore audits,
+		OutboxStore outbox,
+		OperationReportStore reports,
+		TriageClassifier classifier,
+		SlaPolicy slaPolicy,
+		TriageMetrics metrics,
+		Clock clock
+	) {
+		return new TriageService(patients, audits, outbox, reports, classifier, slaPolicy, metrics, clock);
+	}
+
+	@Bean
+	OutboxPublishingUseCase outboxPublishingService(
+		OutboxStore outbox,
+		TriageEventPublisher eventPublisher,
+		Clock clock
+	) {
+		return new OutboxPublishingService(outbox, eventPublisher, clock);
+	}
+
+	@Bean
+	TriageUseCases triageUseCases(
+		TriageService triageService,
+		ReactiveTransactionManager transactionManager
+	) {
+		return new TransactionalTriageUseCases(
+			triageService, TransactionalOperator.create(transactionManager));
 	}
 
 	@Bean
