@@ -10,9 +10,11 @@ import org.springframework.ai.document.Document;
 import org.springframework.ai.vectorstore.VectorStore;
 import org.springframework.boot.ApplicationArguments;
 import org.springframework.boot.ApplicationRunner;
+import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Component;
 
 @Component
+@Order(1)
 public class ProtocolVectorIndexInitializer implements ApplicationRunner {
 	private static final Logger log = LoggerFactory.getLogger(ProtocolVectorIndexInitializer.class);
 
