@@ -58,9 +58,12 @@ public class AssistantConfiguration {
 	ProtocolRetriever protocolRetriever(
 		VectorStore vectorStore,
 		ProtocolCatalog protocolCatalog,
-		@Value("${assistant.rag.similarity-threshold:0.82}") double similarityThreshold
+		@Value("${assistant.rag.similarity-threshold:0.82}") double similarityThreshold,
+		@Value("${spring.ai.google.genai.embedding.api-key:}") String embeddingApiKey,
+		CircuitBreaker llmCircuitBreaker
 	) {
-		return new RedisProtocolRetriever(vectorStore, protocolCatalog, similarityThreshold);
+		return new RedisProtocolRetriever(
+			vectorStore, protocolCatalog, similarityThreshold, embeddingApiKey, llmCircuitBreaker);
 	}
 
 	@Bean

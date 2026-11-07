@@ -3,6 +3,7 @@ package com.example.assistant.infrastructure.adapter.outbound.ai;
 import com.example.assistant.domain.exception.LlmUnavailableException;
 import com.example.assistant.domain.model.Protocol;
 import com.example.assistant.domain.port.outbound.ClinicalAnswerGenerator;
+import io.github.resilience4j.circuitbreaker.CallNotPermittedException;
 import io.github.resilience4j.circuitbreaker.CircuitBreaker;
 import io.github.resilience4j.reactor.circuitbreaker.operator.CircuitBreakerOperator;
 import io.micrometer.core.instrument.MeterRegistry;
@@ -61,6 +62,11 @@ public class SpringAiAnswerGenerator implements ClinicalAnswerGenerator {
 				.filter(answer -> !answer.isBlank())
 				.switchIfEmpty(Mono.error(new LlmUnavailableException("El proveedor de IA devolvió una respuesta vacía"))))
 			.transformDeferred(CircuitBreakerOperator.of(circuitBreaker))
+			.onErrorMap(CallNotPermittedException.class, error ->
+				new LlmUnavailableException(
+					"Proveedor de IA temporalmente no disponible; circuit breaker abierto. "
+						+ "Intente nuevamente más tarde.",
+					error))
 			.onErrorMap(error -> error instanceof LlmUnavailableException
 				? error
 				: new LlmUnavailableException("Proveedor de IA no disponible", error))

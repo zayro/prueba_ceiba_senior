@@ -5,6 +5,8 @@ import com.example.assistant.domain.model.Protocol;
 import com.example.assistant.domain.model.ProtocolCatalog;
 import com.example.assistant.domain.port.outbound.ProtocolRetriever;
 import com.google.genai.errors.ApiException;
+import io.github.resilience4j.circuitbreaker.CallNotPermittedException;
+import io.github.resilience4j.circuitbreaker.CircuitBreaker;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
@@ -19,11 +21,15 @@ public class RedisProtocolRetriever implements ProtocolRetriever {
 	private final VectorStore vectorStore;
 	private final Map<String, Protocol> protocolsById;
 	private final double similarityThreshold;
+	private final String embeddingApiKey;
+	private final CircuitBreaker circuitBreaker;
 
 	public RedisProtocolRetriever(
 		VectorStore vectorStore,
 		ProtocolCatalog protocolCatalog,
-		double similarityThreshold
+		double similarityThreshold,
+		String embeddingApiKey,
+		CircuitBreaker circuitBreaker
 	) {
 		if (!Double.isFinite(similarityThreshold) || similarityThreshold < 0 || similarityThreshold > 1) {
 			throw new IllegalArgumentException("RAG_SIMILARITY_THRESHOLD must be between 0 and 1");
@@ -32,10 +38,15 @@ public class RedisProtocolRetriever implements ProtocolRetriever {
 		this.protocolsById = protocolCatalog.protocols().stream()
 			.collect(Collectors.toUnmodifiableMap(Protocol::id, Function.identity()));
 		this.similarityThreshold = similarityThreshold;
+		this.embeddingApiKey = embeddingApiKey;
+		this.circuitBreaker = circuitBreaker;
 	}
 
 	@Override
 	public List<Protocol> retrieve(String question) {
+		if (embeddingApiKey.isBlank()) {
+			throw new LlmUnavailableException("Proveedor de embeddings no configurado; defina LLM_API_KEY");
+		}
 		SearchRequest searchRequest = SearchRequest.builder()
 			.query(question)
 			.topK(MAX_RESULTS)
@@ -43,7 +54,11 @@ public class RedisProtocolRetriever implements ProtocolRetriever {
 			.build();
 		List<Document> results;
 		try {
-			results = vectorStore.similaritySearch(searchRequest);
+			results = circuitBreaker.executeSupplier(() -> vectorStore.similaritySearch(searchRequest));
+		} catch (CallNotPermittedException error) {
+			throw new LlmUnavailableException(
+				"Proveedor de IA temporalmente no disponible; circuit breaker abierto. Intente nuevamente más tarde.",
+				error);
 		} catch (ApiException error) {
 			throw new LlmUnavailableException(
 				"Proveedor de embeddings no disponible; no se pueden consultar protocolos", error);
